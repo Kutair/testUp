@@ -191,6 +191,9 @@
             position: absolute;
             top: 0; left:0; right:0;
             z-index: 100;
+            display: flex;
+            justify-content: space-between; /* Space out left/right icons */
+            width: 100%;
         }
         .page-header h2 {
             font-size: 1.15em;
@@ -203,12 +206,18 @@
             display: flex;
             flex-direction: column;
             position: relative;
+            /* This rule might not exist, but add it if it does to ensure centering works */
+            align-items: center;
         }
+        
+        /* Replace .profile-top-section */
         .profile-top-section {
             position: relative;
-            padding-top: 56px;
+            padding-top: 56px; /* Space for header */
+            padding-bottom: 20px; /* Space below content */
             background: var(--app-profile-gradient-fallback);
             transition: background 0.3s ease;
+            width: 100%;
         }
         .profile-header-pattern-overlay {
             position: absolute;
@@ -223,13 +232,16 @@
              position: relative; z-index: 1;
              padding: 0 15px;
         }
-        .profile-top-pinned-gifts {
-            display: flex;
-            justify-content: center;
-            gap: 8px;
-            padding: 5px 0 8px 0;
-            min-height: 30px;
+        #profile-top-pinned-gifts {
+            position: absolute;
+            top: 70px; /* Vertical position of the arc's center */
+            left: 50%;
+            transform: translateX(-50%);
+            width: 300px; /* Width of the arc container */
+            height: 150px; /* Height of the arc container */
+            pointer-events: none; /* Container isn't interactive */
         }
+
         .profile-top-pinned-gifts .pinned-gift-item {
             width: 30px; height: 30px;
             border-radius: 8px;
@@ -239,19 +251,29 @@
         }
         .profile-main-info {
             display: flex;
-            align-items: center;
-            padding: 8px 0 20px 0;
+            flex-direction: column; /* Change to vertical layout */
+            align-items: center;    /* Center items horizontally */
+            margin-top: 100px;      /* Push down to clear the gift arc */
         }
+        
+        /* Replace .profile-avatar */
         .profile-avatar {
-            width: 70px; height: 70px;
+            width: 90px; height: 90px;  /* Make avatar larger */
             border-radius: 50%;
             background-color: var(--tg-theme-hint-color);
-            margin-right: 15px;
+            margin-bottom: 15px;      /* Add space below avatar */
             object-fit: cover;
-            border: 3px solid rgba(255,255,255,0.1);
+            border: none;             /* Remove the border */
             cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2); /* Add subtle shadow */
         }
-        .profile-name-status { display: flex; flex-direction: column; }
+        
+        /* Replace .profile-name-status */
+        .profile-name-status {
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* Center the name and status line */
+        }
         .profile-name-status .name-line { display: flex; align-items: center; }
         .profile-name-status h1 {
             font-size: 1.4em; font-weight: 600;
@@ -1287,6 +1309,71 @@
         .reaction-chip:hover {
              background-color: var(--tg-theme-hint-color);
         }
+
+        .profile-top-pinned-gifts .pinned-gift-item {
+            width: 40px; height: 40px;
+            border-radius: 12px;
+            background-color: rgba(0,0,0,0.1);
+            overflow: hidden;
+            cursor: pointer;
+            position: absolute;
+            left: 50%;
+            top: 100%; /* Start positioning from the bottom-center of the container */
+            transform-origin: center -100px; /* This sets the radius of the arc! */
+            pointer-events: auto; /* Make the gifts clickable */
+            transition: transform 0.3s ease;
+        }
+        
+        #profile-status-line {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 8px;
+        }
+        
+        #pinned-gift-count-bubble {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            background-color: var(--app-action-button-bg);
+            color: var(--tg-theme-text-color);
+            border-radius: 50%;
+            font-size: 0.9em;
+            font-weight: 500;
+            margin-right: 8px;
+        }
+        
+        #profile-status {
+            font-size: 0.95em;
+            color: var(--tg-theme-text-color);
+            opacity: 0.7;
+            margin-top: 0; /* Reset margin */
+        }
+        
+        .header-icons-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .header-icon-btn {
+            background: none;
+            border: none;
+            color: var(--tg-theme-text-color);
+            padding: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .header-icon-btn svg {
+            width: 24px;
+            height: 24px;
+            fill: currentColor;
+        }
     </style>
 </head>
 <body>
@@ -1308,13 +1395,21 @@
 
     <div class="app-container">
         <div id="profile-page" class="page active">
-             <input type="file" id="avatar-upload-input" class="hidden" accept="image/*">
-             <div class="page-header"></div>
+            <input type="file" id="avatar-upload-input" class="hidden" accept="image/*">
+            <div class="page-header">
+                <div class="header-icons-left"></div> <!-- Placeholder for back button -->
+                <div class="header-icons-right">
+                    <button id="profile-edit-btn" class="header-icon-btn hidden">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z" /></svg>
+                    </button>
+                    <!-- The dots menu (SettingsButton) is controlled by Telegram's script -->
+                </div>
+            </div>
             <div class="profile-page-content">
                 <div id="profile-top-section" class="profile-top-section">
                     <div id="profile-header-pattern-overlay" class="profile-header-pattern-overlay"></div>
+                    <div id="profile-top-pinned-gifts" class="profile-top-pinned-gifts"></div>
                     <div class="profile-header-content-wrapper">
-                        <div id="profile-top-pinned-gifts" class="profile-top-pinned-gifts"></div>
                         <div id="profile-main-info-block" class="profile-main-info">
                             <img id="profile-avatar" class="profile-avatar" src="" alt="Avatar">
                             <div class="profile-name-status">
@@ -1322,10 +1417,11 @@
                                     <h1 id="profile-name">Name</h1>
                                     <div id="worn-gift-icon-container" class="hidden lottie-animation-container"></div>
                                 </div>
-                                <p id="profile-gift-count-subtext">0 gifts</p>
-                                <p id="profile-status" class="online">online</p>
+                                <div id="profile-status-line">
+                                    <span id="pinned-gift-count-bubble">0</span>
+                                    <span id="profile-status" class="online">online</span>
+                                </div>
                             </div>
-                            <button id="notification-bell-btn" class="hidden">🔔</button>
                         </div>
                     </div>
                 </div>
@@ -2584,13 +2680,13 @@
                  await initializeTelegramUserAccount();
                  return;
              }
-
+        
              viewingOwnProfile = false;
              try {
                 const profileData = await callBackend(`/api/profile/${username}`, 'GET', null, { viewer_id: currentAccountTgId });
                 ownedGifts = profileData.owned_gifts || [];
                 profilePosts = profileData.posts || [];
-
+        
                 profileName.textContent = profileData.full_name || 'User';
                 profileAvatar.src = profileData.avatar_url || '';
                 profileAvatar.onerror = () => { profileAvatar.src = `https://i.pravatar.cc/140?u=fallback${generateUniqueId()}`; };
@@ -2599,8 +2695,9 @@
                 profileBio.textContent = profileData.bio || "No bio yet";
                 profilePhone.textContent = profileData.phone_number || "Not specified";
                 document.getElementById('notification-bell-btn').classList.remove('hidden');
+                document.getElementById('profile-edit-btn').classList.add('hidden');
                 buyGiftsTabButton.style.display = 'none'; // Hide buy gifts button
-
+        
                 collectibleUsernamesContainer.innerHTML = '';
                 if (profileData.collectible_usernames && profileData.collectible_usernames.length > 0) {
                     const alsoSpan = document.createElement('span'); alsoSpan.className = 'also-text'; alsoSpan.textContent = 'also';
@@ -2610,13 +2707,13 @@
                         collectibleUsernamesContainer.appendChild(unameSpan);
                     });
                 }
-
+        
                 manageBackButton(true, () => initializeTelegramUserAccount());
-
+        
                 profileBio.style.cursor = 'default';
                 profileBio.onclick = null;
                 profileAvatar.style.cursor = 'default';
-
+        
                 renderAll();
             } catch (error) {
                 console.error("Error fetching user profile:", error);
@@ -2664,7 +2761,7 @@
         function loadUserData() {
             const account = accounts.find(acc => acc.tg_id === currentAccountTgId);
             if (!account) return;
-
+        
             profileName.textContent = account.full_name || 'User';
             profileAvatar.src = account.avatar_url || '';
             profileAvatar.onerror = () => { profileAvatar.src = `https://i.pravatar.cc/140?u=fallback${generateUniqueId()}`; };
@@ -2674,14 +2771,16 @@
             profilePhone.textContent = account.phone_number || "Not specified";
             profileBio.style.cursor = 'pointer';
             profileAvatar.style.cursor = 'pointer';
-
+            
+            document.getElementById('profile-edit-btn').classList.remove('hidden');
+        
             collectibleUsernamesContainer.innerHTML = '';
             if (account.collectible_usernames && account.collectible_usernames.length > 0) {
                 const alsoSpan = document.createElement('span');
                 alsoSpan.className = 'also-text';
                 alsoSpan.textContent = 'also';
                 collectibleUsernamesContainer.appendChild(alsoSpan);
-
+        
                 account.collectible_usernames.forEach(uname => {
                     const unameSpan = document.createElement('span');
                     unameSpan.className = 'collectible-username-span';
@@ -2692,11 +2791,11 @@
                         e.preventDefault();
                         handleDeleteCollectibleUsername(uname);
                     });
-
+        
                     collectibleUsernamesContainer.appendChild(unameSpan);
                 });
             }
-
+        
             sidebarCurrentAvatar.src = account.avatar_url;
             sidebarCurrentName.textContent = account.full_name;
         }
@@ -2973,9 +3072,9 @@
         function renderProfileGifts() {
             Array.from(giftsGrid.children).forEach(child => unobserveLottieElement(child));
             giftsGrid.innerHTML = '';
-
+        
             const baseGifts = showHiddenGifts ? ownedGifts : ownedGifts.filter(g => !g.is_hidden);
-
+        
             const filteredGifts = baseGifts.filter(gift => {
                 if (activeFilters.collection && gift.gift_type_id !== activeFilters.collection) return false;
                 if (gift.is_collectible && gift.collectible_data) {
@@ -2985,7 +3084,7 @@
                 } else if (activeFilters.model || activeFilters.backdrop || activeFilters.pattern) return false;
                 return true;
             });
-
+        
             const sortedGifts = [...filteredGifts].sort((a, b) => {
                 const aIsPinned = a.is_pinned && a.pin_order != null;
                 const bIsPinned = b.is_pinned && b.pin_order != null;
@@ -2994,14 +3093,18 @@
                 if (bIsPinned) return 1;
                 return new Date(b.acquired_date) - new Date(a.acquired_date);
             });
-
+        
             currentlySortedGifts = sortedGifts;
-
-            profileGiftCountSubtext.textContent = getGiftCountText(filteredGifts.length);
-            if (ownedGifts.length > 0 && filteredGifts.length !== ownedGifts.length) {
-                profileGiftCountSubtext.textContent += ` of ${ownedGifts.length}`;
+        
+            const pinnedGiftsCount = ownedGifts.filter(g => g.is_pinned && !g.is_hidden).length;
+            const pinnedGiftCountBubble = document.getElementById('pinned-gift-count-bubble');
+            if (pinnedGiftCountBubble) {
+                pinnedGiftCountBubble.textContent = pinnedGiftsCount;
             }
-
+            
+            // Hide the old subtext element just in case it's still in the cache
+            if(profileGiftCountSubtext) profileGiftCountSubtext.classList.add('hidden');
+        
             if (currentlySortedGifts.length === 0) {
                 giftsGrid.style.display = 'flex'; giftsGrid.style.alignItems = 'center'; giftsGrid.style.justifyContent = 'center';
                 let emptyMessage = "You don't have any gifts yet.";
@@ -3102,15 +3205,31 @@
         function renderTopPinnedGiftsPreview() {
             Array.from(profileTopPinnedGifts.children).forEach(childLottieContainer => destroyLottieAnimation(childLottieContainer));
             profileTopPinnedGifts.innerHTML = '';
-
+        
             const pinnedGifts = ownedGifts.filter(g => g.is_pinned && !g.is_hidden)
-                                          .sort((a,b) => a.pin_order - b.pin_order);
-
-            pinnedGifts.slice(0, 7).forEach(gift => {
+                                          .sort((a,b) => (a.pin_order || 0) - (b.pin_order || 0));
+        
+            const giftsToDisplay = pinnedGifts.slice(0, 8);
+            const totalItems = giftsToDisplay.length;
+            if (totalItems === 0) return;
+        
+            const angleSpread = 160; // Total degrees of the arc
+            const startAngle = -angleSpread / 2;
+            const angleStep = totalItems > 1 ? angleSpread / (totalItems - 1) : 0;
+        
+            giftsToDisplay.forEach((gift, index) => {
                 const container = document.createElement('div');
                 container.className = 'pinned-gift-item';
                 container.dataset.instanceId = gift.instance_id;
                 container.addEventListener('click', () => openGiftDetailByInstanceId(gift.instance_id));
+                
+                const rotationAngle = startAngle + (index * angleStep);
+                container.style.transform = `rotate(${rotationAngle}deg)`;
+                
+                const innerContent = document.createElement('div');
+                // This is important: counter-rotate the content so the gift image itself is upright
+                innerContent.style.transform = `rotate(${-rotationAngle}deg)`;
+                
                 let lottiePathForPinned = null, imageForPinned = gift.original_image_url;
                 if (gift.is_collectible && gift.collectible_data) {
                     lottiePathForPinned = gift.collectible_data.lottieModelPath;
@@ -3118,12 +3237,15 @@
                 } else if (gift.lottie_path) {
                     lottiePathForPinned = gift.lottie_path;
                 }
+        
                 if (animationsEnabled && lottiePathForPinned) {
-                    container.classList.add('lottie-animation-container');
-                    playLottieAnimation(container, lottiePathForPinned, true);
+                    innerContent.classList.add('lottie-animation-container');
+                    playLottieAnimation(innerContent, lottiePathForPinned, true);
                 } else {
-                     container.innerHTML = `<img src="${imageForPinned}" alt="${gift.gift_name}" style="width:100%; height:100%; object-fit:contain;" onerror="this.parentElement.innerHTML = '🎁'">`;
+                     innerContent.innerHTML = `<img src="${imageForPinned}" alt="${gift.gift_name}" style="width:100%; height:100%; object-fit:contain;" onerror="this.parentElement.innerHTML = '🎁'">`;
                 }
+                
+                container.appendChild(innerContent);
                 profileTopPinnedGifts.appendChild(container);
             });
         }
@@ -5383,6 +5505,7 @@
             buyGiftsTabButton.addEventListener('click', () => switchTab('buy-gifts'));
             postsContent.addEventListener('click', handleWallClick);
             newPostFab.addEventListener('click', () => openModal(newPostModal));
+            
 
             if (upgradeAllGiftsButton) upgradeAllGiftsButton.addEventListener('click', handleUpgradeAllGifts);
 
@@ -5408,6 +5531,7 @@
             document.getElementById('close-usernames-modal').addEventListener('click', () => closeModal(usernamesModal));
             document.getElementById('cancel-giveaway-setup').addEventListener('click', () => closeModal(giveawaySetupModal));
             document.getElementById('custom-buy-cancel-button').addEventListener('click', () => closeModal(customBuyModal));
+            document.getElementById('profile-edit-btn').addEventListener('click', handleEditBio);
             
             submitNewPostButton.addEventListener('click', handleNewPostSubmit);
             document.getElementById('cancel-new-post-button').addEventListener('click', () => closeModal(newPostModal));
