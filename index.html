@@ -2614,7 +2614,6 @@
             const user = tg.initDataUnsafe?.user;
             let tg_id = user?.id;
 
-            document.getElementById('notification-bell-btn').classList.add('hidden');
             buyGiftsTabButton.style.display = 'flex';
             currentPublicProfileData = null; // Clear public profile data
             
@@ -2694,7 +2693,6 @@
                 profileUsername.onclick = null;
                 profileBio.textContent = profileData.bio || "No bio yet";
                 profilePhone.textContent = profileData.phone_number || "Not specified";
-                document.getElementById('notification-bell-btn').classList.remove('hidden');
                 document.getElementById('profile-edit-btn').classList.add('hidden');
                 buyGiftsTabButton.style.display = 'none'; // Hide buy gifts button
         
@@ -5604,7 +5602,6 @@
             confirmTransferButton.addEventListener('click', handleConfirmTransfer);
 
             document.getElementById('fullscreen-toggle').addEventListener('change', handleFullscreenToggle);
-            document.getElementById('notification-bell-btn').addEventListener('click', openSubscriptionModal);
             document.getElementById('close-subscription-modal').addEventListener('click', () => closeModal(document.getElementById('subscription-modal')));
             document.getElementById('mentions-toggle').addEventListener('change', (e) => updateSubscription('mentions', e.target.checked));
             document.getElementById('new-posts-toggle').addEventListener('change', (e) => updateSubscription('new_posts', e.target.checked));
