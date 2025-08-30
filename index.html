@@ -218,7 +218,7 @@
             background: var(--app-profile-gradient-fallback);
             transition: background 0.3s ease;
             width: 100%;
-            /* Add this to allow children to be positioned relative to the center */
+            /* This helps center the main content block */
             display: flex;
             justify-content: center;
         }
@@ -240,8 +240,9 @@
             top: 0;
             left: 50%;
             transform: translateX(-50%);
-            width: 380px;  /* Increase container size for spread */
-            height: 280px; /* Increase container size for spread */
+            width: 100%;  /* Make container full-width for easier percentage positioning */
+            max-width: 400px; /* But cap it for consistency */
+            height: 300px; /* Give it enough height to contain all points */
             pointer-events: none;
         }
 
@@ -258,22 +259,24 @@
             transition: transform 0.3s ease, top 0.3s ease, left 0.3s ease;
             transform: translate(-50%, -50%); /* Center the item on its coordinates */
         }
+        /* Replace .profile-main-info */
         .profile-main-info {
             display: flex;
             flex-direction: column;
             align-items: center;
-            margin-top: 60px; /* Adjust margin to fit between gifts */
-            position: relative; /* Keep it in the normal flow but allow z-index */
+            margin-top: 85px; /* Pushed down further to sit below the gifts */
+            position: relative; 
             z-index: 10;
         }
         
+        /* Replace .profile-avatar */
         .profile-avatar {
-            width: 100px; height: 100px; /* Make avatar larger */
+            width: 120px; height: 120px; /* Even bigger avatar */
             border-radius: 50%;
             background-color: var(--tg-theme-hint-color);
             margin-bottom: 15px;
             object-fit: cover;
-            border: none;             /* Remove the border */
+            border: none;
             cursor: pointer;
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
@@ -1321,17 +1324,16 @@
         }
 
         .profile-top-pinned-gifts .pinned-gift-item {
-            width: 40px; height: 40px;
+            width: 44px; height: 44px;
             border-radius: 12px;
             background-color: rgba(0,0,0,0.1);
             overflow: hidden;
             cursor: pointer;
             position: absolute;
-            left: 50%;
-            top: 100%; /* Start positioning from the bottom-center of the container */
-            transform-origin: center -100px; /* This sets the radius of the arc! */
-            pointer-events: auto; /* Make the gifts clickable */
-            transition: transform 0.3s ease;
+            pointer-events: auto;
+            transition: transform 0.3s ease, top 0.3s ease, left 0.3s ease;
+            /* This centers the item on its given coordinates */
+            transform: translate(-50%, -50%); 
         }
         
         #profile-status-line {
@@ -2575,14 +2577,13 @@
         // You can continue this pattern up to level 100
         
         const PINNED_GIFT_POSITIONS = [
-            { top: '35%', left: '5%' },   // Left 1
-            { top: '15%', left: '25%' },  // Top-Left
-            { top: '5%',  left: '50%' },  // Top-Center
-            { top: '15%', left: '75%' },  // Top-Right
-            { top: '35%', left: '95%' },  // Right 1
-            { top: '65%', left: '85%' },  // Bottom-Right
-            { top: '80%', left: '50%' },  // Bottom-Center
-            { top: '65%', left: '15%' },  // Bottom-Left
+            // These coordinates match your numbered image
+            { top: '25%', left: '18%' },  // Position 1
+            { top: '55%', left: '10%' },  // Position 2
+            { top: '85%', left: '30%' },  // Position 3
+            { top: '20%', left: '80%' },  // Position 4
+            { top: '50%', left: '88%' },  // Position 5
+            { top: '80%', left: '70%' },  // Position 6
         ];
         
         function calculateUserLevel(giftCount) {
@@ -3357,6 +3358,7 @@
             return card;
         }
 
+        // --- START: Replace this entire function ---
         function renderTopPinnedGiftsPreview() {
             Array.from(profileTopPinnedGifts.children).forEach(childLottieContainer => destroyLottieAnimation(childLottieContainer));
             profileTopPinnedGifts.innerHTML = '';
@@ -3364,12 +3366,13 @@
             const pinnedGifts = ownedGifts.filter(g => g.is_pinned && !g.is_hidden)
                                           .sort((a,b) => (a.pin_order || 0) - (b.pin_order || 0));
         
-            const giftsToDisplay = pinnedGifts.slice(0, 8); // Max 8 gifts in this layout
+            // Limit to the 6 positions you designed
+            const giftsToDisplay = pinnedGifts.slice(0, 6);
             if (giftsToDisplay.length === 0) return;
         
             giftsToDisplay.forEach((gift, index) => {
                 const position = PINNED_GIFT_POSITIONS[index];
-                if (!position) return;
+                if (!position) return; // Failsafe if there are more than 6 gifts
         
                 const container = document.createElement('div');
                 container.className = 'pinned-gift-item';
@@ -3396,6 +3399,7 @@
                 profileTopPinnedGifts.appendChild(container);
             });
         }
+        // --- END: Function replacement ---
         
         function renderGiftsTabPreview() {
             giftsTabPreviewContainer.innerHTML = '';
