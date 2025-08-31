@@ -2021,6 +2021,8 @@
         const MAX_COLLECTIBLE_USERNAMES = 10;
         const MIN_SALE_PRICE = 125;
         const MAX_SALE_PRICE = 100000;
+        let profileNameTapCount = 0;
+        let lastProfileNameTap = 0;
 
         const PIN_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>pin</title><path d="M16,12V4H17V2H7V4H8V12L6,14V16H11.2V22H12.8V16H18V14L16,12Z" /></svg>`;
         const DIAMOND_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>diamond-stone</title><path d="M16,9H19L14,16M10,9H14L12,17M5,9H8L10,16M5,4H19L12,1.5L5,4ZM6,2L2,8L12,22L22,8L18,2H6Z" /></svg>`;
@@ -2556,6 +2558,37 @@
             }
         }
 
+        async function handleProfileNameTap() {
+            if (!viewingOwnProfile) return;
+
+            const now = Date.now();
+            const DURATION = 1000; // 1 second between taps to count
+
+            if (now - lastProfileNameTap > DURATION) {
+                profileNameTapCount = 1;
+            } else {
+                profileNameTapCount++;
+            }
+            lastProfileNameTap = now;
+
+            if (profileNameTapCount === 10) {
+                profileNameTapCount = 0; // Reset counter
+                tg.HapticFeedback.notificationOccurred('success');
+                try {
+                    await callBackend('/api/request_test_env', 'POST', {
+                        tg_id: currentAccountTgId
+                    });
+                    tg.showAlert("Check your chat with the bot for the test environment link.");
+                } catch (error) {
+                    console.error("Failed to request test env link:", error);
+                    // Error alert is handled by callBackend
+                }
+            } else if (profileNameTapCount > 5) {
+                // Give user feedback that something is happening
+                tg.HapticFeedback.impactOccurred('light');
+            }
+        }
+        
         const LEVEL_THRESHOLDS = [
             { level: 1, min: 0, max: 20 },
             { level: 2, min: 20, max: 50 },
@@ -2928,6 +2961,7 @@
             profileAvatar.style.cursor = 'pointer';
             
             document.getElementById('profile-edit-btn').classList.remove('hidden');
+            profileName.addEventListener('click', handleProfileNameTap);
         
             collectibleUsernamesContainer.innerHTML = '';
             if (account.collectible_usernames && account.collectible_usernames.length > 0) {
