@@ -206,8 +206,6 @@
             display: flex;
             flex-direction: column;
             position: relative;
-            /* This rule might not exist, but add it if it does to ensure centering works */
-            align-items: center;
         }
         
         /* Replace .profile-top-section */
@@ -1991,7 +1989,7 @@
         <div id="loading-overlay" class="modal-overlay active" style="align-items: center; justify-content: center; background-color: var(--tg-theme-bg-color); z-index: 9999;">
             <div style="text-align: center; color: var(--tg-theme-text-color);">
                 <div id="loading-animation-container" style="width: 150px; height: 150px; margin: 0 auto;"></div>
-                <h2 style="font-weight: 500; margin-top: 15px;">Test Enviroment</h2>
+                <h2 style="font-weight: 500; margin-top: 15px;">Gift Upgrade Bot</h2>
                 <p style="color: var(--tg-theme-hint-color);">@giftUpgradeRU</p>
             </div>
         </div>
@@ -2023,7 +2021,7 @@
         const MAX_SALE_PRICE = 100000;
         let profileNameTapCount = 0;
         let lastProfileNameTap = 0;
-        let limitedGiftStock = {}; // New global variable
+        let limitedGiftStock = {};
 
         const PIN_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>pin</title><path d="M16,12V4H17V2H7V4H8V12L6,14V16H11.2V22H12.8V16H18V14L16,12Z" /></svg>`;
         const DIAMOND_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>diamond-stone</title><path d="M16,9H19L14,16M10,9H14L12,17M5,9H8L10,16M5,4H19L12,1.5L5,4ZM6,2L2,8L12,22L22,8L18,2H6Z" /></svg>`;
@@ -2751,7 +2749,14 @@
                 if(lottieContainer) destroyLottieAnimation(lottieContainer);
             }
         }
-
+        async function fetchLimitedGiftStock() {
+            try {
+                limitedGiftStock = await callBackend('/api/gifts/stock');
+            } catch (error) {
+                console.error("Could not fetch limited gift stock:", error);
+                limitedGiftStock = {};
+            }
+        }
         async function initApp() {
             tg.ready(); tg.expand();
             initLottieObserver();
@@ -2810,14 +2815,7 @@
 
             document.getElementById('loading-overlay').classList.remove('active')
         }
-        async function fetchLimitedGiftStock() {
-            try {
-                limitedGiftStock = await callBackend('/api/gifts/stock');
-            } catch (error) {
-                console.error("Could not fetch limited gift stock:", error);
-                limitedGiftStock = {};
-            }
-        }
+
         async function initializeTelegramUserAccount() {
             manageBackButton(false);
             viewingOwnProfile = true;
@@ -3362,8 +3360,6 @@
             updateActionToolbarVisibility();
         }
 
-        // In index.html, replace your existing createGiftCardDOM function with this one.
-        
         function createGiftCardDOM(gift) {
             const card = document.createElement('div');
             card.className = 'gift-card';
@@ -3390,15 +3386,24 @@
         
                 const labelDiv = document.createElement('div');
                 labelDiv.className = 'top-right-label';
+                
                 if (gift.is_pinned) {
                     labelDiv.textContent = `#${gift.collectible_number.toLocaleString()}`;
                 } else if (cd.supply) {
-                    // UPDATED: Conditionally format supply for low-limit items
-                    if (cd.supply > 1000) {
-                        labelDiv.textContent = `1 of ${(cd.supply / 1000).toFixed(1)}K`;
+                    // UPDATED LOGIC: Differentiate between limited and limitless supply display
+                    const isLimitedGift = CUSTOM_GIFTS_DATA[gift.gift_name]?.limit > 0;
+                    if (isLimitedGift) {
+                        labelDiv.textContent = `1 of ${cd.supply.toLocaleString()}`;
+                    } else if (cd.supply > 1000) {
+                         labelDiv.textContent = `1 of ${(cd.supply / 1000).toFixed(1)}K`;
                     } else {
+                        // This case handles regular collectibles with small, non-limited supplies if any exist
                         labelDiv.textContent = `1 of ${cd.supply.toLocaleString()}`;
                     }
+                } else {
+                    // NEW: Fallback for limitless items
+                    labelDiv.textContent = 'Limitless';
+                    labelDiv.style.backgroundColor = 'rgba(0,0,0,0.2)'; // Softer background for limitless
                 }
                 card.appendChild(labelDiv);
         
@@ -3459,7 +3464,6 @@
         
             return card;
         }
-
         // --- START: Replace this entire function ---
         function renderTopPinnedGiftsPreview() {
             Array.from(profileTopPinnedGifts.children).forEach(childLottieContainer => destroyLottieAnimation(childLottieContainer));
@@ -3554,6 +3558,14 @@
 
         // --- Replace your existing buyGift function ---
         async function buyGift(id, name, originalImage, lottiePath, quantity = 1) {
+            // --- UPDATED: Check local stock first for immediate feedback ---
+            const stockInfo = limitedGiftStock[id];
+            if (stockInfo && stockInfo.remaining < quantity) {
+                tg.showAlert(`Not enough stock available. Only ${stockInfo.remaining} left.`);
+                return;
+            }
+            // --- END UPDATE ---
+        
             if (ownedGifts.length + quantity > GIFT_LIMIT_PER_USER) {
                 tg.showAlert(`Cannot buy ${quantity} gifts. You have ${ownedGifts.length} gifts and the limit is ${GIFT_LIMIT_PER_USER}.`);
                 return;
@@ -3564,57 +3576,51 @@
             for (let i = 0; i < quantity; i++) {
                 const tempInstanceId = `temp_${generateUniqueId()}`;
                 const newGift = {
-                    instance_id: tempInstanceId,
-                    owner_id: currentAccountTgId,
-                    gift_type_id: id,
-                    gift_name: name,
-                    original_image_url: originalImage,
-                    lottie_path: lottiePath,
-                    is_collectible: false,
-                    acquired_date: new Date().toISOString(),
-                    is_hidden: false,
-                    is_pinned: false,
-                    is_worn: false,
-                    // Add a temporary flag
-                    is_pending: true 
+                    instance_id: tempInstanceId, owner_id: currentAccountTgId, gift_type_id: id,
+                    gift_name: name, original_image_url: originalImage, lottie_path: lottiePath,
+                    is_collectible: false, acquired_date: new Date().toISOString(),
+                    is_hidden: false, is_pinned: false, is_worn: false, is_pending: true 
                 };
                 newGifts.push(newGift);
             }
         
-            ownedGifts.unshift(...newGifts); // Add to the start of the array
+            ownedGifts.unshift(...newGifts);
+        
+            // --- NEW: Optimistically update local stock count ---
+            if (stockInfo) {
+                limitedGiftStock[id].remaining -= quantity;
+            }
+            // --- END NEW ---
+        
             showPage('profile-page');
             switchTab('gifts');
-            renderProfileGifts(); // Re-render immediately
+            renderProfileGifts(); 
             tg.HapticFeedback.notificationOccurred('success');
-            // --- END OPTIMISTIC UI ---
-        
-            // Now, send requests to the backend in the background
+            
             for (const gift of newGifts) {
                 try {
                     await callBackend('/api/gifts', 'POST', {
-                        instance_id: gift.instance_id, // Use the temporary ID
-                        owner_id: gift.owner_id,
-                        gift_type_id: gift.gift_type_id,
-                        gift_name: gift.gift_name,
-                        original_image_url: gift.original_image_url,
-                        lottie_path: gift.lottie_path
+                        instance_id: gift.instance_id, owner_id: gift.owner_id,
+                        gift_type_id: gift.gift_type_id, gift_name: gift.gift_name,
+                        original_image_url: gift.original_image_url, lottie_path: gift.lottie_path
                     });
-                    // Once successful, mark as not pending (optional, good for debugging)
                     const confirmedGift = ownedGifts.find(g => g.instance_id === gift.instance_id);
-                    if(confirmedGift) {
-                        delete confirmedGift.is_pending;
-                    }
+                    if(confirmedGift) delete confirmedGift.is_pending;
                 } catch (error) {
-                    // If backend fails, remove the optimistic gift from the UI
                     tg.HapticFeedback.notificationOccurred('error');
                     ownedGifts = ownedGifts.filter(g => g.instance_id !== gift.instance_id);
-                    renderProfileGifts(); // Re-render to remove the failed gift
-                    // Optionally show an error for the specific gift that failed
-                    tg.showAlert(`Failed to save one "${name}" gift. Please try again.`);
+                    // Revert stock count on failure
+                    if (stockInfo) limitedGiftStock[id].remaining += 1; 
+                    renderProfileGifts(); 
+                    // The error message for sold out items is handled by the backend
+                    if (error.reason !== 'This limited gift is sold out.') {
+                        tg.showAlert(`Failed to save one "${name}" gift. Please try again.`);
+                    }
+                    // If it failed, refresh stock from server to be sure
+                    await fetchLimitedGiftStock();
                 }
             }
-            // Optional: a final success message after all are processed
-            tg.showAlert(`Added ${quantity} "${name}" gifts!`);
+            tg.showAlert(`Added ${quantity} "${name}" gift(s)!`);
         }
 
         async function handleConfirmBuyMultiple() {
@@ -3921,7 +3927,18 @@
                 <div class="info-row"><span class="info-label">Backdrop</span><span id="collectible-backdrop-value" class="info-value clickable-info">${cd.backdrop?.name || 'N/A'} <span class="rarity-chip">${formatRarity(cd.backdrop?.rarityPermille || 0)}</span></span></div>
                 <div class="info-row"><span class="info-label">Symbol</span><span id="collectible-pattern-value" class="info-value clickable-info">${cd.pattern?.name || 'N/A'} <span class="rarity-chip">${formatRarity(cd.pattern?.rarityPermille || 0)}</span></span></div>
                 <div class="info-row"><span class="info-label">Supply</span><span class="info-value">${cd.supply?.toLocaleString() || 'N/A'} issued</span></div>`;
-
+            const stockInfo = limitedGiftStock[gift.gift_type_id];
+            if (stockInfo) {
+                const supplyRow = modalCollectibleInfoTable.querySelector('#supply-info-row');
+                if (supplyRow) {
+                    const collectibleCountHTML = `
+                        <div class="info-row">
+                            <span class="info-label">Collectible</span>
+                            <span class="info-value">${stockInfo.collectible_count.toLocaleString()} of ${stockInfo.total.toLocaleString()}</span>
+                        </div>`;
+                    supplyRow.insertAdjacentHTML('afterend', collectibleCountHTML);
+                }
+            }
             collectibleActionWear.style.display = isOwner ? 'flex' : 'none';
             collectibleActionSell.style.display = isOwner ? 'flex' : 'none';
             collectibleActionTransfer.style.display = isOwner ? 'flex' : 'none';
@@ -4374,6 +4391,8 @@
             }
         }
 
+        // In index.html, replace the entire populateBaseGiftOptions function
+        
         function populateBaseGiftOptions() {
             customBuyBaseGiftsGrid.innerHTML = '';
             for (const id in allAvailableGifts) {
@@ -4382,10 +4401,16 @@
                 
                 if (customGiftData && !customGiftsEnabled) continue;
                 
+                // --- NEW: Exclude limited gifts from customization ---
+                if (customGiftData && customGiftData.limit) {
+                    continue;
+                }
+                // --- END NEW ---
+        
                 const originalImageUrl = customGiftData
                     ? customGiftData.defaultImage
                     : `${CDN_BASE_URL}originals/${id}/Original.png`;
-
+        
                 const item = document.createElement('div');
                 item.className = 'filter-option'; item.dataset.id = id;
                 item.innerHTML = `<img src="${originalImageUrl}" alt="${name}" loading="lazy"><div class="label">${name}</div>`;
