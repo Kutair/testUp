@@ -3314,29 +3314,37 @@
                 return true;
             });
         
+            // --- THIS SORTING LOGIC IS THE KEY TO "ALWAYS ON TOP" ---
             const sortedGifts = [...filteredGifts].sort((a, b) => {
-                const aIsPinned = a.is_pinned && a.pin_order != null;
-                const bIsPinned = b.is_pinned && b.pin_order != null;
-                if (aIsPinned && bIsPinned) return a.pin_order - b.pin_order;
-                if (aIsPinned) return -1;
-                if (bIsPinned) return 1;
+                const aIsPinned = a.is_pinned;
+                const bIsPinned = b.is_pinned;
+        
+                if (aIsPinned && !bIsPinned) return -1; // a comes first
+                if (!aIsPinned && bIsPinned) return 1;  // b comes first
+                if (aIsPinned && bIsPinned) {
+                    // Both are pinned, sort by their pin_order
+                    return (a.pin_order || 0) - (b.pin_order || 0);
+                }
+                // Neither is pinned, sort by acquired date (newest first)
                 return new Date(b.acquired_date) - new Date(a.acquired_date);
             });
+            // --- END OF SORTING LOGIC ---
         
             currentlySortedGifts = sortedGifts;
         
-            const totalGiftCount = ownedGifts.length; // Count hidden gifts too for level
+            const totalGiftCount = ownedGifts.length;
             const userLevel = calculateUserLevel(totalGiftCount).level;
             const levelBubble = document.getElementById('profile-level-bubble');
             if (levelBubble) {
                 levelBubble.textContent = userLevel;
             }
             
-            // Hide the old subtext element if it exists
             if(profileGiftCountSubtext) profileGiftCountSubtext.classList.add('hidden');
         
             if (currentlySortedGifts.length === 0) {
-                giftsGrid.style.display = 'flex'; giftsGrid.style.alignItems = 'center'; giftsGrid.style.justifyContent = 'center';
+                giftsGrid.style.display = 'flex';
+                giftsGrid.style.alignItems = 'center';
+                giftsGrid.style.justifyContent = 'center';
                 let emptyMessage = "You don't have any gifts yet.";
                 if (ownedGifts.length > 0) {
                     emptyMessage = "No gifts match the selected filters.";
@@ -4026,45 +4034,83 @@
             if (!longPressMenu.contains(event.target) && event.target !== longPressMenu) { longPressMenu.classList.add('hidden'); currentLongPressGift = null; }
         }
 
+        // In index.html, replace the entire handlePinAction function with this new version.
+        
         function handlePinAction() {
             if (!currentLongPressGift || !currentLongPressGift.is_collectible) {
                 tg.showAlert("Only collectible gifts can be pinned.");
-                longPressMenu.classList.add('hidden'); currentLongPressGift = null; return;
+                longPressMenu.classList.add('hidden');
+                currentLongPressGift = null;
+                return;
             }
             if (currentLongPressGift.owner_id !== currentAccountTgId) {
                 tg.showAlert("You can only pin gifts you own.");
-                longPressMenu.classList.add('hidden'); currentLongPressGift = null; return;
+                longPressMenu.classList.add('hidden');
+                currentLongPressGift = null;
+                return;
             }
             if (currentLongPressGift.is_hidden) {
                 tg.showAlert("Cannot pin a hidden gift.");
-                longPressMenu.classList.add('hidden'); return;
-            }
-
-            const giftInstanceId = currentLongPressGift.instance_id;
-            const isCurrentlyPinned = currentLongPressGift.is_pinned;
-            const giftToUpdate = ownedGifts.find(g => g.instance_id === giftInstanceId);
-            if (!giftToUpdate) return;
-
-            const currentlyPinnedCount = ownedGifts.filter(g => g.is_pinned && g.owner_id === currentAccountTgId).length;
-
-            if (!isCurrentlyPinned && currentlyPinnedCount >= 6) {
-                showTooManyPinsModal();
                 longPressMenu.classList.add('hidden');
                 return;
             }
-
-            longPressMenu.classList.add('hidden');
-
-            giftToUpdate.is_pinned = !isCurrentlyPinned;
+        
+            const giftInstanceId = currentLongPressGift.instance_id;
+            const giftToUpdate = ownedGifts.find(g => g.instance_id === giftInstanceId);
+            if (!giftToUpdate) return;
+        
+            const isCurrentlyPinned = giftToUpdate.is_pinned;
+            const currentlyPinnedCount = ownedGifts.filter(g => g.is_pinned).length;
+            longPressMenu.classList.add('hidden'); // Close menu immediately
+        
+            if (!isCurrentlyPinned && currentlyPinnedCount >= 6) {
+                showTooManyPinsModal();
+                currentLongPressGift = null;
+                return;
+            }
+        
+            // --- NEW LOGIC FOR PINNING/UNPINNING AND RE-ORDERING ---
+            const originalGiftState = JSON.parse(JSON.stringify(giftToUpdate));
+        
+            if (isCurrentlyPinned) {
+                // --- UNPINNING ---
+                giftToUpdate.is_pinned = false;
+                giftToUpdate.pin_order = null;
+                
+                // Re-sequence the remaining pinned items to close the gap
+                const remainingPinned = ownedGifts
+                    .filter(g => g.is_pinned)
+                    .sort((a, b) => a.pin_order - b.pin_order);
+                
+                remainingPinned.forEach((gift, index) => {
+                    gift.pin_order = index;
+                });
+        
+            } else {
+                // --- PINNING ---
+                giftToUpdate.is_pinned = true;
+                // Place it at the end of the pinned list
+                giftToUpdate.pin_order = currentlyPinnedCount;
+            }
+        
+            // This re-renders the grid, causing the item to "teleport" to its new position
             renderProfileGifts();
             tg.HapticFeedback.impactOccurred(isCurrentlyPinned ? 'light' : 'medium');
-
-            callBackend(`/api/gifts/${giftInstanceId}`, 'PUT', { action: 'pin', value: !isCurrentlyPinned })
-                .catch(error => {
-                    giftToUpdate.is_pinned = isCurrentlyPinned;
-                    renderProfileGifts();
-                });
-
+        
+            // Send the update to the backend
+            callBackend(`/api/gifts/${giftInstanceId}`, 'PUT', {
+                action: 'pin',
+                value: !isCurrentlyPinned
+            }).catch(error => {
+                // On failure, revert the local state to what it was before the action
+                const giftToRevert = ownedGifts.find(g => g.instance_id === giftInstanceId);
+                if (giftToRevert) {
+                    Object.assign(giftToRevert, originalGiftState);
+                    // Re-render again to show the reverted state
+                    renderProfileGifts(); 
+                }
+            });
+        
             currentLongPressGift = null;
         }
 
@@ -5229,13 +5275,23 @@
             reorderModeActive = true;
             longPressMenu.classList.add('hidden');
             exitReorderModeButton.classList.remove('hidden');
+            updateActionToolbarVisibility();
             giftsGrid.classList.add('reordering');
-            renderProfileGifts();
-
+            
+            // We call renderProfileGifts to ensure the grid is correctly sorted before making it draggable
+            renderProfileGifts(); 
+        
             sortableInstance = new Sortable(giftsGrid, {
                 animation: 150,
                 filter: '.gift-card:not([data-pinned="true"])',
-                preventOnFilter: true
+                preventOnFilter: true,
+                // --- NEW: This is the magic that keeps pinned items separate ---
+                onMove: function (evt) {
+                    // Allow dragging a pinned item (evt.dragged) ONLY over another pinned item (evt.related).
+                    // This prevents pinned items from being moved into the unpinned section.
+                    return evt.related.dataset.pinned === 'true';
+                }
+                // --- END NEW ---
             });
         }
 
