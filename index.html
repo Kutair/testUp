@@ -3362,14 +3362,16 @@
             updateActionToolbarVisibility();
         }
 
+        // In index.html, replace your existing createGiftCardDOM function with this one.
+        
         function createGiftCardDOM(gift) {
             const card = document.createElement('div');
             card.className = 'gift-card';
             card.dataset.instanceId = gift.instance_id;
             card.dataset.pinned = gift.is_pinned;
-
+        
             if (gift.is_hidden) card.classList.add('is-hidden');
-
+        
             const imageContainer = document.createElement('div');
             imageContainer.className = 'image-container';
             const lottieContainer = document.createElement('div');
@@ -3379,47 +3381,65 @@
             staticImage.className = 'static-image-fallback';
             staticImage.loading = 'lazy';
             let lottiePathForCard = null;
-
+        
             if (gift.is_collectible && gift.collectible_data) {
                 const cd = gift.collectible_data;
                 staticImage.src = cd.modelImage || gift.original_image_url;
                 staticImage.alt = cd.model?.name || gift.gift_name;
                 lottiePathForCard = cd.lottieModelPath;
-
+        
                 const labelDiv = document.createElement('div');
                 labelDiv.className = 'top-right-label';
+                if (gift.is_pinned) {
+                    labelDiv.textContent = `#${gift.collectible_number.toLocaleString()}`;
                 } else if (cd.supply) {
-                    // --- MODIFIED LOGIC ---
+                    // UPDATED: Conditionally format supply for low-limit items
                     if (cd.supply > 1000) {
                         labelDiv.textContent = `1 of ${(cd.supply / 1000).toFixed(1)}K`;
                     } else {
                         labelDiv.textContent = `1 of ${cd.supply.toLocaleString()}`;
                     }
-                    // --- END MODIFICATION ---
                 }
                 card.appendChild(labelDiv);
-
-                const bgDiv = document.createElement('div'); bgDiv.className = 'gift-card-bg-pattern';
-                if (cd.backdropColors) bgDiv.style.background = `radial-gradient(circle, ${cd.backdropColors.centerColor}, ${cd.backdropColors.edgeColor})`;
-                else bgDiv.style.background = 'linear-gradient(45deg, #2a3745, #17212b)';
+        
+                const bgDiv = document.createElement('div');
+                bgDiv.className = 'gift-card-bg-pattern';
+                if (cd.backdropColors) {
+                    bgDiv.style.background = `radial-gradient(circle, ${cd.backdropColors.centerColor}, ${cd.backdropColors.edgeColor})`;
+                } else {
+                    bgDiv.style.background = 'linear-gradient(45deg, #2a3745, #17212b)';
+                }
                 card.appendChild(bgDiv);
-
-                if (cd.patternImage) { const pOverlay = document.createElement('div'); pOverlay.className = 'gift-card-pattern-overlay'; pOverlay.style.backgroundImage = `url('${cd.patternImage}')`; card.appendChild(pOverlay); }
+        
+                if (cd.patternImage) {
+                    const pOverlay = document.createElement('div');
+                    pOverlay.className = 'gift-card-pattern-overlay';
+                    pOverlay.style.backgroundImage = `url('${cd.patternImage}')`;
+                    card.appendChild(pOverlay);
+                }
             } else {
-                staticImage.src = gift.original_image_url; staticImage.alt = gift.gift_name;
+                staticImage.src = gift.original_image_url;
+                staticImage.alt = gift.gift_name;
                 lottiePathForCard = gift.lottie_path;
             }
-            if (lottiePathForCard) card.dataset.lottiePath = lottiePathForCard;
-            staticImage.onerror = function() { this.style.display='none'; lottieContainer.innerHTML = '🖼️';};
-            imageContainer.appendChild(lottieContainer); imageContainer.appendChild(staticImage);
+            if (lottiePathForCard) {
+                card.dataset.lottiePath = lottiePathForCard;
+            }
+            staticImage.onerror = function() {
+                this.style.display = 'none';
+                lottieContainer.innerHTML = '🖼️';
+            };
+            imageContainer.appendChild(lottieContainer);
+            imageContainer.appendChild(staticImage);
             card.appendChild(imageContainer);
             if (gift.is_pinned && !selectionModeActive) {
-                const pinDiv = document.createElement('div'); pinDiv.className = 'pin-indicator';
+                const pinDiv = document.createElement('div');
+                pinDiv.className = 'pin-indicator';
                 pinDiv.innerHTML = PIN_ICON_SVG;
                 pinDiv.querySelector('svg').style.transform = 'rotate(25deg)';
                 card.appendChild(pinDiv);
             }
-
+        
             if (selectionModeActive) {
                 const checkbox = document.createElement('div');
                 checkbox.className = 'selection-checkbox';
@@ -3432,9 +3452,11 @@
                 card.style.cursor = gift.is_pinned ? 'grab' : 'default';
             } else {
                 card.onclick = () => openGiftDetailByInstanceId(gift.instance_id);
-                if (viewingOwnProfile) setupLongPress(card, gift);
+                if (viewingOwnProfile) {
+                    setupLongPress(card, gift);
+                }
             }
-
+        
             return card;
         }
 
