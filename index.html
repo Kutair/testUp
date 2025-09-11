@@ -558,9 +558,9 @@
         }
         .card-pattern-symbol {
             position: absolute;
-            /* The opacity makes it blend nicely with the background */
-            opacity: 0.5; 
-            /* This transform-origin is crucial for correct rotation */
+            /* --- UPDATED --- */
+            /* Lowered from 0.5 to 0.2 to make the pattern much fainter */
+            opacity: 0.2; 
             transform-origin: center center; 
         }
         .image-container {
@@ -3465,11 +3465,13 @@
                     card.appendChild(patternContainer);
         
                     // --- UPDATED CONFIGURATION ---
-                    // Increased the outer radius from 45 to 55 for more separation.
-                    // Set rotationOffset to 0 on both to keep them upright.
+                    // The radius and size values have been significantly adjusted
+                    // to make symbols smaller and create a wider gap between circles.
                     const patternConfig = [
-                        { count: 8, radius: 35, size: 14, rotationOffset: 0 }, // Inner circle
-                        { count: 8, radius: 55, size: 12, rotationOffset: 22.5 } // Outer, staggered circle
+                        // Inner Circle: Slightly larger radius, smaller symbols
+                        { count: 8, radius: 38, size: 12, rotationOffset: 0 }, 
+                        // Outer Circle: Much larger radius for more distance, smaller symbols
+                        { count: 8, radius: 62, size: 10, rotationOffset: 22.5 } 
                     ];
                     // --- END UPDATE ---
                     
