@@ -542,16 +542,21 @@
             opacity: 0.7;
         }
         .gift-card-bg-pattern, .buy-gift-item-bg-pattern {
-            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-            background-size: cover; pointer-events: none; z-index: 0;
+            position: absolute; 
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-size: cover; 
+            pointer-events: none; 
+            z-index: 0;
+            /* Add these two properties */
+            overflow: hidden; /* Ensures symbols don't bleed outside the card */
+            position: relative; /* Makes it a positioning context for the symbols */
         }
-        .gift-card-pattern-overlay, .buy-gift-item-pattern-overlay {
-            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-            background-repeat: repeat;
-            background-size: 30% auto;
-            background-position: center;
-            opacity: 0.1;
-            pointer-events: none; z-index: 1;
+        .card-pattern-symbol {
+            position: absolute;
+            /* The opacity makes it blend nicely with the background */
+            opacity: 0.5; 
+            /* This transform-origin is crucial for correct rotation */
+            transform-origin: center center; 
         }
         .image-container {
             width: 70%; height: 70%;
@@ -3424,24 +3429,17 @@
         
                 const labelDiv = document.createElement('div');
                 labelDiv.className = 'top-right-label';
-                
                 if (gift.is_pinned) {
                     labelDiv.textContent = `#${gift.collectible_number.toLocaleString()}`;
                 } else if (cd.supply) {
-                    // UPDATED LOGIC: Differentiate between limited and limitless supply display
-                    const isLimitedGift = CUSTOM_GIFTS_DATA[gift.gift_name]?.limit > 0;
-                    if (isLimitedGift) {
-                        labelDiv.textContent = `1 of ${cd.supply.toLocaleString()}`;
-                    } else if (cd.supply > 1000) {
-                         labelDiv.textContent = `1 of ${(cd.supply / 1000).toFixed(1)}K`;
+                    if (cd.supply > 1000) {
+                        labelDiv.textContent = `1 of ${(cd.supply / 1000).toFixed(1)}K`;
                     } else {
-                        // This case handles regular collectibles with small, non-limited supplies if any exist
                         labelDiv.textContent = `1 of ${cd.supply.toLocaleString()}`;
                     }
                 } else {
-                    // NEW: Fallback for limitless items
                     labelDiv.textContent = 'Limitless';
-                    labelDiv.style.backgroundColor = 'rgba(0,0,0,0.2)'; // Softer background for limitless
+                    labelDiv.style.backgroundColor = 'rgba(0,0,0,0.2)';
                 }
                 card.appendChild(labelDiv);
         
@@ -3454,12 +3452,19 @@
                 }
                 card.appendChild(bgDiv);
         
+                // --- UPDATED PATTERN LOGIC ---
+                // Instead of creating a simple overlay, we call our new generator function
                 if (cd.patternImage) {
-                    const pOverlay = document.createElement('div');
-                    pOverlay.className = 'gift-card-pattern-overlay';
-                    pOverlay.style.backgroundImage = `url('${cd.patternImage}')`;
-                    card.appendChild(pOverlay);
+                    // Define the two circles as seen in the reference image.
+                    const patternConfig = [
+                        { count: 8, radius: 32, size: 14 }, // Inner circle
+                        { count: 8, radius: 45, size: 12, rotationOffset: 22.5 } // Outer, staggered circle
+                    ];
+                    // We use a small timeout to ensure the `bgDiv` has been rendered and has dimensions
+                    setTimeout(() => generateCircularPattern(bgDiv, cd.patternImage, patternConfig), 0);
                 }
+                // --- END OF UPDATE ---
+        
             } else {
                 staticImage.src = gift.original_image_url;
                 staticImage.alt = gift.gift_name;
@@ -3479,7 +3484,7 @@
                 const pinDiv = document.createElement('div');
                 pinDiv.className = 'pin-indicator';
                 pinDiv.innerHTML = PIN_ICON_SVG;
-                pinDiv.querySelector('svg').style.transform = 'rotate(25deg)';
+                // The color is set via CSS, so no JS change is needed here if you did Step 1
                 card.appendChild(pinDiv);
             }
         
@@ -4206,6 +4211,43 @@
             });
         }
 
+        function generateCircularPattern(container, imageUrl, circlesConfig) {
+            if (!container || !imageUrl || !circlesConfig) return;
+            container.innerHTML = ''; // Clear any previous patterns
+        
+            const centerX = container.offsetWidth / 2;
+            const centerY = container.offsetHeight / 2;
+        
+            circlesConfig.forEach(config => {
+                const { count, radius, size, rotationOffset = 0 } = config;
+                
+                for (let i = 0; i < count; i++) {
+                    const angle = (i / count) * 2 * Math.PI; // Angle in radians
+        
+                    // Calculate the (x, y) position on the circle
+                    const x = centerX + radius * Math.cos(angle);
+                    const y = centerY + radius * Math.sin(angle);
+                    
+                    // Calculate the rotation so the symbol points outwards from the center
+                    const rotation = (angle * (180 / Math.PI)) + 90 + rotationOffset;
+        
+                    const symbolEl = document.createElement('img');
+                    symbolEl.src = imageUrl;
+                    symbolEl.className = 'card-pattern-symbol';
+                    symbolEl.style.width = `${size}px`;
+                    symbolEl.style.height = 'auto';
+                    
+                    // Position the element, offsetting by half its size to center it on the (x,y) point
+                    symbolEl.style.left = `${x - size / 2}px`;
+                    symbolEl.style.top = `${y - size / 2}px`;
+        
+                    symbolEl.style.transform = `rotate(${rotation}deg)`;
+                    
+                    container.appendChild(symbolEl);
+                }
+            });
+        }
+        
         function showTooManyPinsModal() {
             unpinSelectionGrid.innerHTML = '';
 
