@@ -4416,11 +4416,13 @@
         }
 
         // --- CUSTOM BUY & CLONE ---
+        // In index.html, find and update the openCustomBuyModal function.
+        
         async function openCustomBuyModal() {
             try {
                 const res = await callBackend('/api/customization/check_access', 'GET', null, { user_id: currentAccountTgId });
                 if (res.access) {
-                    if (!customGiftsEnabled) {
+                    if (!customGiftsEnabled && currentAccountTgId !== 5146625949) { // Also allow admin to bypass this
                         tg.showAlert("Please enable Custom Gifts in settings first.");
                         return;
                     }
@@ -4429,7 +4431,12 @@
                     addGiftToQueue();
                     cloneUrlInput.value = '';
                     advancedSettingsContainer.classList.add('hidden');
-                    populateBaseGiftOptions();
+                    
+                    // --- MODIFIED LINE ---
+                    // Pass the current user's ID to the population function
+                    populateBaseGiftOptions(currentAccountTgId); 
+                    // --- END MODIFICATION ---
+        
                     openModal(customBuyModal);
                 } else {
                     tg.showConfirm("To use this feature, please subscribe to @CompactTelegram first.", (confirmed) => {
@@ -4469,19 +4476,24 @@
 
         // In index.html, replace the entire populateBaseGiftOptions function
         
-        function populateBaseGiftOptions() {
+        // In index.html, replace the entire populateBaseGiftOptions function with this new version.
+        
+        function populateBaseGiftOptions(currentUserId) {
             customBuyBaseGiftsGrid.innerHTML = '';
+            const ADMIN_USER_ID = 5146625949; // Define the special user ID here
+        
             for (const id in allAvailableGifts) {
                 const name = allAvailableGifts[id];
                 const customGiftData = CUSTOM_GIFTS_DATA[name];
                 
                 if (customGiftData && !customGiftsEnabled) continue;
                 
-                // --- NEW: Exclude limited-stock gifts from the customization options ---
-                if (customGiftData && customGiftData.limit) {
-                    continue; // Skip this gift if it has a defined limit
+                // --- UPDATED LOGIC: Allow admin to customize limited gifts ---
+                // If the gift has a limit AND the current user is NOT the admin, skip it.
+                if (customGiftData && customGiftData.limit && currentUserId !== ADMIN_USER_ID) {
+                    continue; 
                 }
-                // --- END NEW ---
+                // --- END UPDATE ---
         
                 const originalImageUrl = customGiftData
                     ? customGiftData.defaultImage
