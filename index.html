@@ -547,9 +547,14 @@
             background-size: cover; 
             pointer-events: none; 
             z-index: 0;
-            /* Add these two properties */
-            overflow: hidden; /* Ensures symbols don't bleed outside the card */
-            position: relative; /* Makes it a positioning context for the symbols */
+            /* REMOVE overflow: hidden; and position: relative; */
+        }
+        .dynamic-pattern-container {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            overflow: hidden; /* Keep symbols inside the card */
+            z-index: 1; /* Place it just above the background gradient */
+            pointer-events: none;
         }
         .card-pattern-symbol {
             position: absolute;
@@ -3443,6 +3448,7 @@
                 }
                 card.appendChild(labelDiv);
         
+                // This is the background gradient layer (z-index: 0)
                 const bgDiv = document.createElement('div');
                 bgDiv.className = 'gift-card-bg-pattern';
                 if (cd.backdropColors) {
@@ -3452,18 +3458,21 @@
                 }
                 card.appendChild(bgDiv);
         
-                // --- UPDATED PATTERN LOGIC ---
-                // Instead of creating a simple overlay, we call our new generator function
+                // --- CORRECTED PATTERN LOGIC ---
                 if (cd.patternImage) {
-                    // Define the two circles as seen in the reference image.
+                    // Create the new dedicated container for symbols (z-index: 1)
+                    const patternContainer = document.createElement('div');
+                    patternContainer.className = 'dynamic-pattern-container';
+                    card.appendChild(patternContainer); // Add it to the card
+        
                     const patternConfig = [
                         { count: 8, radius: 32, size: 14 }, // Inner circle
                         { count: 8, radius: 45, size: 12, rotationOffset: 22.5 } // Outer, staggered circle
                     ];
-                    // We use a small timeout to ensure the `bgDiv` has been rendered and has dimensions
-                    setTimeout(() => generateCircularPattern(bgDiv, cd.patternImage, patternConfig), 0);
+                    // We generate the pattern inside this new container
+                    setTimeout(() => generateCircularPattern(patternContainer, cd.patternImage, patternConfig), 0);
                 }
-                // --- END OF UPDATE ---
+                // --- END CORRECTION ---
         
             } else {
                 staticImage.src = gift.original_image_url;
@@ -3477,14 +3486,17 @@
                 this.style.display = 'none';
                 lottieContainer.innerHTML = '🖼️';
             };
+            
+            // The main image container sits on top of bg and pattern (z-index: 2)
             imageContainer.appendChild(lottieContainer);
             imageContainer.appendChild(staticImage);
             card.appendChild(imageContainer);
+            
+            // Pinned icon and labels sit on the highest layers
             if (gift.is_pinned && !selectionModeActive) {
                 const pinDiv = document.createElement('div');
                 pinDiv.className = 'pin-indicator';
                 pinDiv.innerHTML = PIN_ICON_SVG;
-                // The color is set via CSS, so no JS change is needed here if you did Step 1
                 card.appendChild(pinDiv);
             }
         
