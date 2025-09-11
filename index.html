@@ -3460,16 +3460,19 @@
         
                 // --- CORRECTED PATTERN LOGIC ---
                 if (cd.patternImage) {
-                    // Create the new dedicated container for symbols (z-index: 1)
                     const patternContainer = document.createElement('div');
                     patternContainer.className = 'dynamic-pattern-container';
-                    card.appendChild(patternContainer); // Add it to the card
+                    card.appendChild(patternContainer);
         
+                    // --- UPDATED CONFIGURATION ---
+                    // Increased the outer radius from 45 to 55 for more separation.
+                    // Set rotationOffset to 0 on both to keep them upright.
                     const patternConfig = [
-                        { count: 8, radius: 32, size: 14 }, // Inner circle
-                        { count: 8, radius: 45, size: 12, rotationOffset: 22.5 } // Outer, staggered circle
+                        { count: 8, radius: 35, size: 14, rotationOffset: 0 }, // Inner circle
+                        { count: 8, radius: 55, size: 12, rotationOffset: 22.5 } // Outer, staggered circle
                     ];
-                    // We generate the pattern inside this new container
+                    // --- END UPDATE ---
+                    
                     setTimeout(() => generateCircularPattern(patternContainer, cd.patternImage, patternConfig), 0);
                 }
                 // --- END CORRECTION ---
@@ -4231,17 +4234,17 @@
             const centerY = container.offsetHeight / 2;
         
             circlesConfig.forEach(config => {
+                // --- UPDATED: Default rotation is now 0 (upright) ---
                 const { count, radius, size, rotationOffset = 0 } = config;
                 
                 for (let i = 0; i < count; i++) {
                     const angle = (i / count) * 2 * Math.PI; // Angle in radians
         
-                    // Calculate the (x, y) position on the circle
                     const x = centerX + radius * Math.cos(angle);
                     const y = centerY + radius * Math.sin(angle);
                     
-                    // Calculate the rotation so the symbol points outwards from the center
-                    const rotation = (angle * (180 / Math.PI)) + 90 + rotationOffset;
+                    // --- REMOVED: No more dynamic rotation based on angle ---
+                    // const rotation = (angle * (180 / Math.PI)) + 90 + rotationOffset;
         
                     const symbolEl = document.createElement('img');
                     symbolEl.src = imageUrl;
@@ -4249,11 +4252,12 @@
                     symbolEl.style.width = `${size}px`;
                     symbolEl.style.height = 'auto';
                     
-                    // Position the element, offsetting by half its size to center it on the (x,y) point
                     symbolEl.style.left = `${x - size / 2}px`;
                     symbolEl.style.top = `${y - size / 2}px`;
         
-                    symbolEl.style.transform = `rotate(${rotation}deg)`;
+                    // --- UPDATED: Apply a fixed rotation if one is provided ---
+                    // This keeps all symbols oriented the same way.
+                    symbolEl.style.transform = `rotate(${rotationOffset}deg)`;
                     
                     container.appendChild(symbolEl);
                 }
