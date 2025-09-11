@@ -585,24 +585,35 @@
         /* Rotated Label - CORRECTED */
         .gift-card .top-right-label {
             position: absolute;
-            top: 10px; /* Adjusted for visual balance */
-            right: -28px; /* Adjusted for visual balance */
+            top: 10px;
+            right: -28px;
             transform: rotate(45deg);
             transform-origin: center;
-            background-color: rgba(0,0,0,0.35);
+            /* Updated background for a 3D feel */
+            background: linear-gradient(to bottom, rgba(0,0,0,0.45), rgba(0,0,0,0.35));
             color: var(--tg-theme-text-color);
             font-size: 0.65em;
             padding: 1px 25px;
             z-index: 4;
             font-weight: 500;
             white-space: nowrap;
+            /* Subtle inner highlight for a beveled look */
+            box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1);
+            border-top: 1px solid rgba(255,255,255,0.1);
+            border-bottom: 1px solid rgba(0,0,0,0.2);
         }
 
         .gift-card .pin-indicator {
             position: absolute; top: 5px; left: 5px;
             z-index: 3; display: flex; align-items: center; justify-content: center;
         }
-        .gift-card .pin-indicator svg { width: 18px; height: 18px; fill: var(--tg-theme-link-color); opacity: 0.8; }
+        .gift-card .pin-indicator svg {
+            width: 18px; 
+            height: 18px; 
+            fill: #FFFFFF; /* Changed from variable to solid white */
+            opacity: 0.9;
+            filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5)); /* Adds depth */
+        }
 
         /* Selection Mode Checkbox */
         .gift-card .selection-checkbox {
@@ -3437,18 +3448,17 @@
                 if (gift.is_pinned) {
                     labelDiv.textContent = `#${gift.collectible_number.toLocaleString()}`;
                 } else if (cd.supply) {
-                    if (cd.supply > 1000) {
-                        labelDiv.textContent = `1 of ${(cd.supply / 1000).toFixed(1)}K`;
+                    const supplyNum = cd.supply;
+                    if (supplyNum > 1000) {
+                         labelDiv.textContent = `1 of ${(supplyNum / 1000).toFixed(1)}K`;
                     } else {
-                        labelDiv.textContent = `1 of ${cd.supply.toLocaleString()}`;
+                         labelDiv.textContent = `1 of ${supplyNum.toLocaleString()}`;
                     }
                 } else {
                     labelDiv.textContent = 'Limitless';
-                    labelDiv.style.backgroundColor = 'rgba(0,0,0,0.2)';
                 }
                 card.appendChild(labelDiv);
         
-                // This is the background gradient layer (z-index: 0)
                 const bgDiv = document.createElement('div');
                 bgDiv.className = 'gift-card-bg-pattern';
                 if (cd.backdropColors) {
@@ -3458,46 +3468,33 @@
                 }
                 card.appendChild(bgDiv);
         
-                // --- CORRECTED PATTERN LOGIC ---
                 if (cd.patternImage) {
                     const patternContainer = document.createElement('div');
                     patternContainer.className = 'dynamic-pattern-container';
                     card.appendChild(patternContainer);
         
-                    // --- UPDATED CONFIGURATION ---
-                    // The radius and size values have been significantly adjusted
-                    // to make symbols smaller and create a wider gap between circles.
+                    // Final, refined values for size and distance
                     const patternConfig = [
-                        // Inner Circle: Slightly larger radius, smaller symbols
-                        { count: 8, radius: 38, size: 12, rotationOffset: 0 }, 
-                        // Outer Circle: Much larger radius for more distance, smaller symbols
-                        { count: 8, radius: 59, size: 11, rotationOffset: 12.5 } 
+                        { count: 8, radius: 38, size: 12 }, 
+                        { count: 8, radius: 62, size: 10, rotationOffset: 22.5 }
                     ];
-                    // --- END UPDATE ---
                     
                     setTimeout(() => generateCircularPattern(patternContainer, cd.patternImage, patternConfig), 0);
                 }
-                // --- END CORRECTION ---
         
             } else {
                 staticImage.src = gift.original_image_url;
                 staticImage.alt = gift.gift_name;
                 lottiePathForCard = gift.lottie_path;
             }
-            if (lottiePathForCard) {
-                card.dataset.lottiePath = lottiePathForCard;
-            }
-            staticImage.onerror = function() {
-                this.style.display = 'none';
-                lottieContainer.innerHTML = '🖼️';
-            };
+        
+            if (lottiePathForCard) card.dataset.lottiePath = lottiePathForCard;
+            staticImage.onerror = () => { this.style.display='none'; lottieContainer.innerHTML = '🖼️'; };
             
-            // The main image container sits on top of bg and pattern (z-index: 2)
             imageContainer.appendChild(lottieContainer);
             imageContainer.appendChild(staticImage);
             card.appendChild(imageContainer);
             
-            // Pinned icon and labels sit on the highest layers
             if (gift.is_pinned && !selectionModeActive) {
                 const pinDiv = document.createElement('div');
                 pinDiv.className = 'pin-indicator';
@@ -4230,37 +4227,24 @@
 
         function generateCircularPattern(container, imageUrl, circlesConfig) {
             if (!container || !imageUrl || !circlesConfig) return;
-            container.innerHTML = ''; // Clear any previous patterns
+            container.innerHTML = ''; 
         
             const centerX = container.offsetWidth / 2;
             const centerY = container.offsetHeight / 2;
         
             circlesConfig.forEach(config => {
-                // --- UPDATED: Default rotation is now 0 (upright) ---
                 const { count, radius, size, rotationOffset = 0 } = config;
-                
                 for (let i = 0; i < count; i++) {
-                    const angle = (i / count) * 2 * Math.PI; // Angle in radians
-        
+                    const angle = (i / count) * 2 * Math.PI + (rotationOffset * Math.PI / 180);
                     const x = centerX + radius * Math.cos(angle);
                     const y = centerY + radius * Math.sin(angle);
-                    
-                    // --- REMOVED: No more dynamic rotation based on angle ---
-                    // const rotation = (angle * (180 / Math.PI)) + 90 + rotationOffset;
-        
                     const symbolEl = document.createElement('img');
                     symbolEl.src = imageUrl;
                     symbolEl.className = 'card-pattern-symbol';
                     symbolEl.style.width = `${size}px`;
                     symbolEl.style.height = 'auto';
-                    
                     symbolEl.style.left = `${x - size / 2}px`;
                     symbolEl.style.top = `${y - size / 2}px`;
-        
-                    // --- UPDATED: Apply a fixed rotation if one is provided ---
-                    // This keeps all symbols oriented the same way.
-                    symbolEl.style.transform = `rotate(${rotationOffset}deg)`;
-                    
                     container.appendChild(symbolEl);
                 }
             });
