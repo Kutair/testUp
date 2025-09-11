@@ -1440,6 +1440,7 @@
         </div>
         <ul class="accounts-list" id="accounts-list"></ul>
         <div class="sidebar-footer">
+            <button id="calculate-collection-price-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M11.5,2C10.67,2 10,2.67 10,3.5V5.5H3.5C2.67,5.5 2,6.17 2,7V10.5C2,11.33 2.67,12 3.5,12H10V14H7.5C6.67,14 6,14.67 6,15.5V20.5C6,21.33 6.67,22 7.5,22H16.5C17.33,22 18,21.33 18,20.5V15.5C18,14.67 17.33,14 16.5,14H14V12H20.5C21.33,12 22,11.33 22,10.5V7C22,6.17 21.33,5.5 20.5,5.5H14V3.5C14,2.67 13.33,2 12.5,2H11.5M12,7A2,2 0 0,0 10,9A2,2 0 0,0 12,11A2,2 0 0,0 14,9A2,2 0 0,0 12,7Z" /></svg>My Collection Price</button>
             <button id="add-account-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M15,14C12.33,14 7,15.33 7,18V20H23V18C23,15.33 17.67,14 15,14M15,12A4,4 0 0,0 19,8A4,4 0 0,0 15,4A4,4 0 0,0 11,8A4,4 0 0,0 15,12M5,13.28L1,10.72L2.41,9.31L5,11.9L9.6,7.3L11,8.72L5,14.72Z" /></svg>Add Account</button>
             <button id="open-filters-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14,12V19.88C14.04,20.18 13.94,20.5 13.71,20.71C13.32,21.1 12.69,21.1 12.3,20.71L10.29,18.7C10.06,18.47 9.96,18.16 10,17.87V12H9.97L4.21,4.62C3.87,4.19 3.95,3.56 4.38,3.22C4.57,3.08 4.78,3 5,3H19C19.22,3 19.43,3.08 19.62,3.22C20.05,3.56 20.13,4.19 19.79,4.62L14.03,12H14Z" /></svg>Filters</button>
             <button id="open-numbers-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M6.62,10.79C8.06,13.62 10.38,15.94 13.21,17.38L15.41,15.18C15.69,14.9 16.08,14.82 16.43,14.93C17.55,15.3 18.75,15.5 20,15.5A1,1 0 0,1 21,16.5V20A1,1 0 0,1 20,21A17,17 0 0,1 3,4A1,1 0 0,1 4,3H7.5A1,1 0 0,1 8.5,4C8.5,5.25 8.7,6.45 9.07,7.57C9.18,7.92 9.1,8.31 8.82,8.59L6.62,10.79Z" /></svg>Numbers</button>
@@ -1984,6 +1985,27 @@
                 </div>
             </div>
         </div>
+
+        <div id="collection-price-modal" class="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-header-bar">
+                    <h3>My Collection Price</h3>
+                </div>
+                <div class="modal-scrollable-content">
+                    <div id="collection-price-summary" style="text-align: center; margin-bottom: 20px;">
+                        <div class="spinner hidden" id="collection-price-spinner"></div>
+                        <h2 id="collection-price-total" style="font-size: 2em; font-weight: 600; color: var(--tg-theme-link-color);"></h2>
+                        <p id="collection-price-info" style="color: var(--tg-theme-hint-color);"></p>
+                    </div>
+                    <ul id="collection-price-list" class="level-info-list">
+                        <!-- Priced gifts will be listed here by JS -->
+                    </ul>
+                </div>
+                <div class="modal-buttons-footer">
+                    <button id="close-collection-price-modal" class="modal-button">Close</button>
+                </div>
+            </div>
+        </div>
         
         <!-- Add this new modal for the loading screen -->
         <div id="loading-overlay" class="modal-overlay active" style="align-items: center; justify-content: center; background-color: var(--tg-theme-bg-color); z-index: 9999;">
@@ -2468,6 +2490,14 @@
         const confirmTransferButton = document.getElementById('confirm-transfer-button');
         const cancelTransferButton = document.getElementById('cancel-transfer-button');
 
+        const calculateCollectionPriceButton = document.getElementById('calculate-collection-price-button');
+        const collectionPriceModal = document.getElementById('collection-price-modal');
+        const collectionPriceSpinner = document.getElementById('collection-price-spinner');
+        const collectionPriceTotal = document.getElementById('collection-price-total');
+        const collectionPriceInfo = document.getElementById('collection-price-info');
+        const collectionPriceList = document.getElementById('collection-price-list');
+        const closeCollectionPriceModal = document.getElementById('close-collection-price-modal');
+        
         const numbersModal = document.getElementById('numbers-modal');
         const numbersList = document.getElementById('numbers-list');
 
@@ -4447,9 +4477,9 @@
                 
                 if (customGiftData && !customGiftsEnabled) continue;
                 
-                // --- NEW: Exclude limited gifts from customization ---
+                // --- NEW: Exclude limited-stock gifts from the customization options ---
                 if (customGiftData && customGiftData.limit) {
-                    continue;
+                    continue; // Skip this gift if it has a defined limit
                 }
                 // --- END NEW ---
         
@@ -4458,7 +4488,8 @@
                     : `${CDN_BASE_URL}originals/${id}/Original.png`;
         
                 const item = document.createElement('div');
-                item.className = 'filter-option'; item.dataset.id = id;
+                item.className = 'filter-option';
+                item.dataset.id = id;
                 item.innerHTML = `<img src="${originalImageUrl}" alt="${name}" loading="lazy"><div class="label">${name}</div>`;
                 item.addEventListener('click', () => selectCustomBaseGift(id, name, originalImageUrl));
                 customBuyBaseGiftsGrid.appendChild(item);
@@ -4680,6 +4711,47 @@
             } finally {
                 cloneGiftButton.disabled = false;
                 cloneGiftButton.textContent = "Clone Gift";
+            }
+        }
+
+        async function handleCalculateCollectionPrice() {
+            closeSidebar();
+            openModal(collectionPriceModal);
+            
+            // Reset UI and show spinner
+            collectionPriceSpinner.classList.remove('hidden');
+            collectionPriceTotal.textContent = '';
+            collectionPriceInfo.textContent = 'Calculating total floor price...';
+            collectionPriceList.innerHTML = '';
+        
+            try {
+                const response = await callBackend('/api/account/collection_price', 'GET', null, {
+                    tg_id: currentAccountTgId
+                });
+        
+                if (response) {
+                    const { total_price, priced_gifts } = response;
+                    collectionPriceTotal.textContent = `${total_price.toLocaleString()} 💎`;
+                    collectionPriceInfo.textContent = `Based on ${priced_gifts.length} priced collectibles.`;
+        
+                    if (priced_gifts.length > 0) {
+                        priced_gifts.sort((a, b) => b.price - a.price); // Sort by highest price first
+                        
+                        priced_gifts.forEach(gift => {
+                            const li = document.createElement('li');
+                            const sourceLabel = gift.source === 'Direct Listing' ? '' : ` <small>(${gift.source})</small>`;
+                            li.innerHTML = `<span>${gift.name}</span><span>${gift.price.toLocaleString()}💎${sourceLabel}</span>`;
+                            collectionPriceList.appendChild(li);
+                        });
+                    } else {
+                        collectionPriceList.innerHTML = '<p class="empty-grid-message">You have no collectible gifts to price.</p>';
+                    }
+                }
+            } catch (error) {
+                collectionPriceInfo.textContent = 'Could not calculate price. Please try again later.';
+                console.error("Error calculating collection price:", error);
+            } finally {
+                collectionPriceSpinner.classList.add('hidden');
             }
         }
         
@@ -5933,6 +6005,9 @@
             addAnotherGiftButton.addEventListener('click', addGiftToQueue);
             advancedSettingsToggle.addEventListener('click', () => advancedSettingsContainer.classList.toggle('hidden'));
 
+            calculateCollectionPriceButton.addEventListener('click', handleCalculateCollectionPrice);
+            closeCollectionPriceModal.addEventListener('click', () => closeModal(collectionPriceModal));
+            
             sellPriceInput.addEventListener('input', updateSellPriceDetails);
             confirmSellButton.addEventListener('click', handleConfirmSell);
 
