@@ -2581,14 +2581,6 @@
         const GIFTS_JSON_URL = `${CDN_BASE_URL}id-to-name.json`;
         const PRICES_JSON_URL = "https://raw.githubusercontent.com/Vasiliy-katsyka/upgrade/refs/heads/main/prices.json";
         const STAR_ICON_URL = "https://raw.githubusercontent.com/Vasiliy-katsyka/upgrade/refs/heads/main/DMJTGStarsEmoji_AgADUhMAAk9WoVI.png";
-
-        let moveModeActive = false;
-        let longPressAvatarTimer;
-        const exitMoveModeButton = document.createElement('button');
-        exitMoveModeButton.id = 'exit-move-mode-button';
-        exitMoveModeButton.className = 'action-button hidden';
-        exitMoveModeButton.textContent = 'Done Organizing';
-        profileGiftsActions.prepend(exitMoveModeButton);
         
         const TRANSFER_GIFT_IMG = "https://github.com/Vasiliy-katsyka/upgrade/blob/main/transfer-gift.png?raw=true";
         const WEAR_GIFT_IMG = "https://github.com/Vasiliy-katsyka/upgrade/blob/main/wear-gift.png?raw=true";
@@ -3207,6 +3199,14 @@
         const newPostContent = document.getElementById('new-post-content');
         const submitNewPostButton = document.getElementById('submit-new-post-button');
 
+        let moveModeActive = false;
+        let longPressAvatarTimer;
+        const exitMoveModeButton = document.createElement('button');
+        exitMoveModeButton.id = 'exit-move-mode-button';
+        exitMoveModeButton.className = 'action-button hidden';
+        exitMoveModeButton.textContent = 'Done Organizing';
+        profileGiftsActions.prepend(exitMoveModeButton);
+        
         const exitFilterModeButton = document.createElement('button');
         exitFilterModeButton.id = 'exit-filter-mode-button';
         exitFilterModeButton.className = 'action-button hidden';
