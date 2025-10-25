@@ -7426,71 +7426,75 @@
         }
 
 
-        // --- START REPLACEMENT: Full setupEventListeners function ---
         function setupEventListeners() {
-            // --- Main Page Navigation & Core UI ---
             giftsTabButton.addEventListener('click', () => switchTab('gifts'));
             postsTabButton.addEventListener('click', () => switchTab('posts'));
             buyGiftsTabButton.addEventListener('click', () => switchTab('buy-gifts'));
-            
-            const hamburgerBtn = document.getElementById('hamburger-btn');
-            if (hamburgerBtn) hamburgerBtn.addEventListener('click', openSidebar);
-            sidebarOverlay.addEventListener('click', closeSidebar);
-        
-            // --- Profile Page Interactions ---
-            profileAvatar.addEventListener('contextmenu', (e) => { e.preventDefault(); if (viewingOwnProfile) avatarUploadInput.click(); });
-            avatarUploadInput.addEventListener('change', handleAvatarUpload);
-            profileEditBtn.addEventListener('click', openEditProfileModal);
-            wornGiftIconContainer.addEventListener('click', () => {
-                const wornGift = ownedGifts.find(g => g.is_worn);
-                if (wornGift) openGiftDetailByInstanceId(wornGift.instance_id);
-            });
-            profileLevelBubble.addEventListener('click', showLevelInfoPopup);
-        
-            // --- Sidebar Button Listeners ---
-            openFiltersButton.addEventListener('click', openFilterPopup);
-            openNumbersButton.addEventListener('click', handleOpenNumbersModal);
-            openUsernamesButton.addEventListener('click', handleOpenUsernamesModal);
-            createGiveawayButton.addEventListener('click', openGiveawaySetupModal);
-            
-            const sidebarFooter = document.querySelector('.sidebar-footer');
-            const marketButton = document.createElement('button');
-            marketButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12,18H6V14H12M21,14V12L20,7H4L3,12V14H4V20H14V14H18V20H20V14M20,4H4V6H20Z" /></svg>Market`;
-            marketButton.addEventListener('click', openMarket);
-            sidebarFooter.prepend(marketButton);
-            
-            const starsButton = document.createElement('button');
-            starsButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12,17.27L18.18,21L16.54,13.97L22,9.24L14.81,8.62L12,2L9.19,8.62L2,9.24L7.45,13.97L5.82,21L12,17.27Z" /></svg>Stars`;
-            starsButton.addEventListener('click', openStarsPopup);
-            sidebarFooter.prepend(starsButton);
-        
-            // --- Wall (Posts) Listeners ---
             postsContent.addEventListener('click', handleWallClick);
             newPostFab.addEventListener('click', () => openModal(newPostModal));
-        
-            // --- Gift Grid Action Bar Buttons ---
+            
+
             if (upgradeAllGiftsButton) upgradeAllGiftsButton.addEventListener('click', handleUpgradeAllGifts);
-            exitFilterModeButton.addEventListener('click', handleClearFilters);
-            exitReorderModeButton.addEventListener('click', exitReorderMode);
-            exitSelectionModeButton.addEventListener('click', exitSelectionMode);
-            hideSelectedGiftsButton.addEventListener('click', handleHideMultiple);
-            transferSelectedGiftsButton.addEventListener('click', handleTransferMultiple);
-            exitMoveModeButton.addEventListener('click', exitMoveMode);
-        
-            // --- Generic Modal Close Handlers ---
+
+            profileBio.addEventListener('click', () => { if (viewingOwnProfile) handleEditBio(); });
+            profileAvatar.addEventListener('contextmenu', (e) => { e.preventDefault(); if (viewingOwnProfile) avatarUploadInput.click(); });
+
             document.querySelectorAll('.modal-overlay').forEach(modal => {
                 modal.addEventListener('click', (e) => {
                     if (e.target === modal) closeModal(modal);
                 });
             });
-        
-            // --- Specific Modal Content & Button Listeners ---
-            // Gift Detail Modal
             closeGiftDetailModalButton.addEventListener('click', () => closeModal(giftDetailModal));
             upgradeGiftDetailModalButton.addEventListener('click', (e) => handleSingleGiftUpgradeFromModal(e.target.dataset.instanceId));
+
+            document.getElementById('close-collectible-detail-modal').addEventListener('click', () => closeModal(collectibleDetailModal));
+            document.getElementById('cancel-unpin-modal').addEventListener('click', () => closeModal(tooManyPinsModal));
+            document.getElementById('cancel-buy-multiple').addEventListener('click', () => closeModal(buyMultipleModal));
+            document.getElementById('close-chances-modal').addEventListener('click', () => closeModal(chancesModal));
+            document.getElementById('close-generated-image-modal').addEventListener('click', () => closeModal(generatedImageModal));
+            document.getElementById('cancel-sell-button').addEventListener('click', () => closeModal(sellGiftModal));
+            document.getElementById('cancel-transfer-button').addEventListener('click', () => closeModal(transferGiftModal));
+            document.getElementById('close-numbers-modal').addEventListener('click', () => closeModal(numbersModal));
+            document.getElementById('close-usernames-modal').addEventListener('click', () => closeModal(usernamesModal));
+            document.getElementById('cancel-giveaway-setup').addEventListener('click', () => closeModal(giveawaySetupModal));
+            document.getElementById('custom-buy-cancel-button').addEventListener('click', () => closeModal(customBuyModal));
+            document.getElementById('profile-edit-btn').addEventListener('click', openEditProfileModal);
+            document.getElementById('save-profile-button').addEventListener('click', handleSaveProfile);
+            document.getElementById('cancel-edit-profile-button').addEventListener('click', () => closeModal(document.getElementById('edit-profile-modal')));
+            document.getElementById('profile-level-bubble').addEventListener('click', showLevelInfoPopup);
+            document.getElementById('close-level-modal').addEventListener('click', () => closeModal(document.getElementById('level-info-modal')));
+
+            const hamburgerBtn = document.getElementById('hamburger-btn');
+            if (hamburgerBtn) {
+                hamburgerBtn.addEventListener('click', openSidebar);
+            }
+            
+            submitNewPostButton.addEventListener('click', handleNewPostSubmit);
+            document.getElementById('cancel-new-post-button').addEventListener('click', () => closeModal(newPostModal));
+            document.getElementById('formatting-help-toggle').addEventListener('click', (e) => {
+                const content = document.getElementById('formatting-help-content');
+                content.classList.toggle('hidden');
+                e.target.textContent = content.classList.contains('hidden') ? 'Show Formatting Help ▼' : 'Hide Formatting Help ▲';
+            });
+            const sidebarFooter = document.querySelector('.sidebar-footer');
+            const marketButton = document.createElement('button');
+            marketButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12,18H6V14H12M21,14V12L20,7H4L3,12V14H4V20H14V14H18V20H20V14M20,4H4V6H20Z" /></svg>Market`;
+            marketButton.addEventListener('click', openMarket);
+            sidebarFooter.prepend(marketButton); // Add at the top of the footer
         
-            // Collectible Detail Modal
-            closeCollectibleDetailModalButton.addEventListener('click', () => closeModal(collectibleDetailModal));
+            const starsButton = document.createElement('button');
+            starsButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12,17.27L18.18,21L16.54,13.97L22,9.24L14.81,8.62L12,2L9.19,8.62L2,9.24L7.45,13.97L5.82,21L12,17.27Z" /></svg>Stars`;
+            starsButton.addEventListener('click', openStarsPopup);
+            sidebarFooter.prepend(starsButton);
+            
+            // Listeners for new modals
+            document.getElementById('topup-stars-button').addEventListener('click', openTopUpModal);
+            document.getElementById('cancel-topup-button').addEventListener('click', () => closeModal(document.getElementById('topup-modal')));
+            document.getElementById('confirm-topup-button').addEventListener('click', handleSimulateTopUp);
+            document.getElementById('topup-amount-input').addEventListener('input', (e) => {
+                document.getElementById('confirm-topup-button').disabled = !e.target.value || parseInt(e.target.value) <= 0;
+            });
+
             collectibleActionWear.addEventListener('click', handleWearAction);
             collectibleActionSell.addEventListener('click', handleSellAction);
             collectibleActionTransfer.addEventListener('click', () => {
@@ -7507,38 +7511,65 @@
                 currentLongPressGift = gift;
                 handleHideAction();
             });
-        
-            // Buy Multiple Modal
-            cancelBuyMultipleButton.addEventListener('click', () => closeModal(buyMultipleModal));
+
+            menuPinAction.addEventListener('click', handlePinAction);
+            menuHideAction.addEventListener('click', handleHideAction);
+            menuCopyLinkAction.addEventListener('click', () => { if(currentLongPressGift) copyGiftLink(currentLongPressGift); });
+            menuDeleteAction.addEventListener('click', handleDeleteAction);
+            menuShareImageAction.addEventListener('click', handleShareImageAction);
+            menuReorderAction.addEventListener('click', enterReorderMode);
+
             confirmBuyMultipleButton.addEventListener('click', handleConfirmBuyMultiple);
-        
-            // Filter Popup
+
+            openFiltersButton.addEventListener('click', openFilterPopup);
             applyFiltersButton.addEventListener('click', handleApplyFilters);
             clearFiltersButton.addEventListener('click', handleClearFilters);
-        
-            // Settings Modal
+            exitFilterModeButton.addEventListener('click', handleClearFilters);
+            exitReorderModeButton.addEventListener('click', exitReorderMode);
+
+            exitSelectionModeButton.addEventListener('click', exitSelectionMode);
+            hideSelectedGiftsButton.addEventListener('click', handleHideMultiple);
+            transferSelectedGiftsButton.addEventListener('click', handleTransferMultiple);
+
+            settingsModal.querySelector('.modal-button.secondary')?.addEventListener('click', () => closeModal(settingsModal));
             animationToggle.addEventListener('change', handleAnimationToggle);
             customGiftsToggle.addEventListener('change', handleCustomGiftsToggle);
             showHiddenToggle.addEventListener('change', handleShowHiddenToggle);
             hideMultipleButton.addEventListener('click', () => enterSelectionMode('hide'));
             transferMultipleButton.addEventListener('click', () => enterSelectionMode('transfer'));
-            const organizeGiftsButton = document.getElementById('organize-gifts-button');
-            if (organizeGiftsButton) organizeGiftsButton.addEventListener('click', enterMoveMode);
             clearCurrentAccountDataButton.addEventListener('click', handleClearCurrentAccountData);
             clearAllAccountsDataButton.addEventListener('click', handleClearAllAccountsData);
-            fullscreenToggle.addEventListener('change', handleFullscreenToggle);
-        
-            // New Post Modal
-            submitNewPostButton.addEventListener('click', handleNewPostSubmit);
-            document.getElementById('cancel-new-post-button').addEventListener('click', () => closeModal(newPostModal));
-            document.getElementById('formatting-help-toggle').addEventListener('click', (e) => {
-                const content = document.getElementById('formatting-help-content');
-                content.classList.toggle('hidden');
-                e.target.textContent = content.classList.contains('hidden') ? 'Show Formatting Help ▼' : 'Hide Formatting Help ▲';
-            });
-            
-            // --- NEW: Gift Creation Studio Listeners ---
+
             customizeGiftButton.addEventListener('click', openCustomBuyModal);
+            customBuyConfirmButton.addEventListener('click', handleCustomBuyConfirm);
+            cloneGiftButton.addEventListener('click', handleCloneGift);
+            addAnotherGiftButton.addEventListener('click', addGiftToQueue);
+            advancedSettingsToggle.addEventListener('click', () => advancedSettingsContainer.classList.toggle('hidden'));
+
+            closeCollectionPriceModal.addEventListener('click', () => closeModal(collectionPriceModal));
+            
+            sellPriceInput.addEventListener('input', updateSellPriceDetails);
+            confirmSellButton.addEventListener('click', handleConfirmSell);
+
+            transferUsernameInput.addEventListener('input', () => { confirmTransferButton.disabled = transferUsernameInput.value.trim() === ''; });
+            confirmTransferButton.addEventListener('click', handleConfirmTransfer);
+
+            document.getElementById('fullscreen-toggle').addEventListener('change', handleFullscreenToggle);
+            document.getElementById('close-subscription-modal').addEventListener('click', () => closeModal(document.getElementById('subscription-modal')));
+            document.getElementById('mentions-toggle').addEventListener('change', (e) => updateSubscription('mentions', e.target.checked));
+            document.getElementById('new-posts-toggle').addEventListener('change', (e) => updateSubscription('new_posts', e.target.checked));
+        
+            avatarUploadInput.addEventListener('change', handleAvatarUpload);
+
+            wornGiftIconContainer.addEventListener('click', () => {
+                const wornGift = ownedGifts.find(g => g.is_worn);
+                if (wornGift) openGiftDetailByInstanceId(wornGift.instance_id);
+            });
+
+            const organizeGiftsButton = document.getElementById('organize-gifts-button');
+            if (organizeGiftsButton) organizeGiftsButton.addEventListener('click', enterMoveMode);
+            exitMoveModeButton.addEventListener('click', exitMoveMode);
+            
             document.getElementById('studio-tab-button').addEventListener('click', () => switchStudioTab('studio'));
             document.getElementById('templates-tab-button').addEventListener('click', () => switchStudioTab('templates'));
             document.getElementById('undo-button').addEventListener('click', handleUndo);
@@ -7549,71 +7580,50 @@
             });
             document.getElementById('save-template-button').addEventListener('click', saveCurrentGiftAsTemplate);
             customBuyConfirmButton.addEventListener('click', handleCustomBuyConfirm);
+            customizeGiftButton.addEventListener('click', openCustomBuyModal);
             
+            // Add listeners to collapsible headers
             document.querySelectorAll('.studio-section-header').forEach(header => {
                 header.addEventListener('click', () => {
-                    const content = header.nextElementSibling;
-                    const wasHidden = content.classList.contains('hidden');
-                    // Optional: Close others when one opens
-                    // document.querySelectorAll('.studio-section-content').forEach(c => c.classList.add('hidden'));
-                    if (wasHidden) content.classList.remove('hidden');
-                    else content.classList.add('hidden');
+                    header.nextElementSibling.classList.toggle('hidden');
                 });
             });
             
+            // Text command / clipboard listener
             const quickCreateInput = document.getElementById('quick-create-input');
-            quickCreateInput.addEventListener('paste', (e) => { setTimeout(() => handleQuickCreate(e.target.value), 0); });
-            quickCreateInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleQuickCreate(e.target.value); });
+            quickCreateInput.addEventListener('paste', (e) => {
+                setTimeout(() => handleQuickCreate(e.target.value), 0);
+            });
+            quickCreateInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') handleQuickCreate(e.target.value);
+            });
             
+            // Clone listener
             const cloneInputStudio = document.getElementById('clone-url-input-studio');
-            cloneInputStudio.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleCloneGiftFromStudio(); });
-            cloneInputStudio.addEventListener('paste', (e) => { setTimeout(() => handleCloneGiftFromStudio(), 0); });
+            cloneInputStudio.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') handleCloneGiftFromStudio();
+            });
+            cloneInputStudio.addEventListener('paste', (e) => {
+                setTimeout(() => handleCloneGiftFromStudio(), 0);
+            });
             
+            // Search bar listeners
             document.querySelectorAll('#studio-parts-selector .part-search-bar').forEach(input => {
                 input.addEventListener('keyup', () => {
                     const gift = giftCreationQueue[currentlyEditingGiftIndex];
-                    if (gift && (gift.id || gift.model)) { // Check if a base has been selected
-                        populatePartSelector(gift.id || gift.model.id, gift.name);
+                    if (gift && gift.id) {
+                        populatePartSelector(gift.id, gift.name); // Re-render with search terms
                     }
                 });
             });
-            // --- End of Studio Listeners ---
             
-            // Edit Profile Modal
-            saveProfileButton.addEventListener('click', handleSaveProfile);
-            cancelEditProfileButton.addEventListener('click', () => closeModal(editProfileModal));
-            
-            // Sell & Transfer Modals
-            sellPriceInput.addEventListener('input', updateSellPriceDetails);
-            confirmSellButton.addEventListener('click', handleConfirmSell);
-            cancelSellButton.addEventListener('click', () => closeModal(sellGiftModal));
-            transferUsernameInput.addEventListener('input', () => { confirmTransferButton.disabled = transferUsernameInput.value.trim() === ''; });
-            confirmTransferButton.addEventListener('click', handleConfirmTransfer);
-            cancelTransferButton.addEventListener('click', () => closeModal(transferGiftModal));
-            
-            // Stars & Top Up Modals
-            document.getElementById('topup-stars-button').addEventListener('click', openTopUpModal);
-            document.getElementById('cancel-topup-button').addEventListener('click', () => closeModal(topupModal));
-            document.getElementById('confirm-topup-button').addEventListener('click', handleSimulateTopUp);
-            document.getElementById('topup-amount-input').addEventListener('input', (e) => {
-                document.getElementById('confirm-topup-button').disabled = !e.target.value || parseInt(e.target.value) <= 0;
-            });
-        
-            // Collectibles (Numbers/Usernames) Modals
+            openNumbersButton.addEventListener('click', handleOpenNumbersModal);
+            openUsernamesButton.addEventListener('click', handleOpenUsernamesModal);
             usernameSearchInput.addEventListener('input', (e) => populateUsernamesList(e.target.value));
-        
-            // Giveaway Modal
+
+            createGiveawayButton.addEventListener('click', openGiveawaySetupModal);
             confirmGiveawaySetupButton.addEventListener('click', handleConfirmGiveawaySetup);
-        
-            // --- Long Press Menu Actions ---
-            menuPinAction.addEventListener('click', handlePinAction);
-            menuHideAction.addEventListener('click', handleHideAction);
-            menuCopyLinkAction.addEventListener('click', () => { if(currentLongPressGift) copyGiftLink(currentLongPressGift); });
-            menuDeleteAction.addEventListener('click', handleDeleteAction);
-            menuShareImageAction.addEventListener('click', handleShareImageAction);
-            menuReorderAction.addEventListener('click', enterReorderMode);
-        
-            // --- App-wide Touch & Swipe Gestures ---
+
             let touchStartX = 0; const swipeEdgeThreshold = 50;
             appContainer.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, { passive: true });
             appContainer.addEventListener('touchend', e => {
@@ -7629,7 +7639,10 @@
                     switchTab('buy-gifts');
                 }
             }, { passive: true });
-        
+
+            sidebarOverlay.addEventListener('click', closeSidebar);
+            
+
             collectibleDetailModal.addEventListener('touchstart', (e) => {
                 modalSwipeState.startX = e.touches[0].clientX;
                 modalSwipeState.isSwiping = true;
