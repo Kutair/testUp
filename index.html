@@ -3132,7 +3132,6 @@
         const customBuyPatternsSection = document.getElementById('custom-buy-patterns-section');
         const customBuyPatternsGrid = document.getElementById('custom-buy-patterns-grid');
         const addAnotherGiftButton = document.getElementById('add-another-gift-button');
-        const advancedSettingsToggle = document.getElementById('advanced-settings-toggle');
         const advancedSettingsContainer = document.getElementById('advanced-settings-container');
         const customBuyQuantityInput = document.getElementById('custom-buy-quantity');
         const cloneUrlInput = document.getElementById('clone-url-input');
@@ -7541,7 +7540,6 @@
             customizeGiftButton.addEventListener('click', openCustomBuyModal);
             customBuyConfirmButton.addEventListener('click', handleCustomBuyConfirm);
             addAnotherGiftButton.addEventListener('click', addGiftToQueue);
-            advancedSettingsToggle.addEventListener('click', () => advancedSettingsContainer.classList.toggle('hidden'));
 
             closeCollectionPriceModal.addEventListener('click', () => closeModal(collectionPriceModal));
             
